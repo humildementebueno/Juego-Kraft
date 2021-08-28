@@ -1,5 +1,11 @@
+// @dart=2.9
 import 'package:flutter/material.dart';
 import 'dart:math';
+import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart';
+import 'package:sensors/sensors.dart';
+import 'package:audioplayers/audio_cache.dart';
+import 'package:audioplayers/audioplayers.dart';
 
 void main() {
   runApp(MyApp());
@@ -23,6 +29,29 @@ class Principal extends StatefulWidget {
 }
 
 class _PrincipalState extends State<Principal> {
+  final audioName = "dados.mp3";
+  final musicName = "daditos";
+  final imageURL = "assets/images/and_cinco.png";
+  AudioPlayer audioPlayer;
+  AudioCache audioCache; //ESTE ES EL CONTROL DEL AUDIO
+
+  //sensores
+  void initState() {
+    // TODO: implement initState
+    super.initState();
+    accelerometerEvents.listen((AccelerometerEvent event) {
+      setState(() {
+        x = event.x;
+        y = event.y;
+        z = event.z;
+        audioPlayer = AudioPlayer();
+        audioCache = AudioCache(fixedPlayer: audioPlayer);
+      });
+    }); //get the sensor data and set then to the data types
+  }
+
+  bool switch_sensor = true;
+  double x = 0, y = 0, z = 0;
   String dado1 = "",
       dado2 = "",
       image1 = "assets/images/juegodados.png",
@@ -93,6 +122,30 @@ class _PrincipalState extends State<Principal> {
                     child: Text("REINICIAR"),
                     onPressed: enableRestart ? _metodoRestart : null),
               ],
+            ),
+            Table(
+              border: TableBorder.all(
+                  width: 2.0,
+                  color: Colors.blueAccent,
+                  style: BorderStyle.solid),
+              children: [
+                TableRow(children: [
+                  Padding(
+                    padding: EdgeInsets.all(8),
+                    child: Text(
+                      "eje mov X : ",
+                      style: TextStyle(fontSize: 20),
+                    ),
+                  ),
+                  Padding(
+                    padding: EdgeInsets.all(8),
+                    child: Text(
+                      movimiento_x(x),
+                      style: TextStyle(fontSize: 20),
+                    ),
+                  )
+                ])
+              ],
             )
           ],
         ),
@@ -100,8 +153,38 @@ class _PrincipalState extends State<Principal> {
     );
   }
 
+  String movimiento_x(double x) {
+    setState(() {});
+    String mov = "";
+    print("valor x: ");
+    print(x.toStringAsFixed(0));
+    int move = int.parse(x.toStringAsFixed(0));
+    if (x < 0.99) {
+      mov = "derecha";
+    }
+    if (x > 0.99) {
+      mov = "izquierda";
+    }
+    if (x < 0.99 && x > -0.99) {
+      mov = "quieto";
+    }
+    if (x < -5.95 || x > 5.95) {
+      mov = "brusco";
+
+      if (switch_sensor) {
+        audioCache.play(audioName);
+        _metodoLanzar();
+        if (resultado == "Perdiste!!" || resultado == "Ganaste!!") {
+          switch_sensor = false;
+        }
+      }
+    }
+    return mov + "(" + move.toString() + ")";
+  }
+
   void _metodoRestart() {
     setState(() {
+      switch_sensor = true;
       dado1 = "";
       dado2 = "";
       image1 = "assets/images/juegodados.png";
